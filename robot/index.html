@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Robot Arm Control Panel</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table, th, td { border: 1px solid #ccc; border-collapse: collapse; padding: 5px; text-align: center; }
+    input[type=range] { width: 200px; }
+    button { margin: 5px; }
+  </style>
+</head>
+<body>
+
+<h3>Robot Arm Control Panel</h3>
+<form id="controlForm">
+  <div>Motor 1: <input type="range" name="motor1" min="0" max="180" value="90" oninput="this.nextElementSibling.innerText=this.value"><span>90</span></div>
+  <div>Motor 2: <input type="range" name="motor2" min="0" max="180" value="90" oninput="this.nextElementSibling.innerText=this.value"><span>90</span></div>
+  <div>Motor 3: <input type="range" name="motor3" min="0" max="180" value="90" oninput="this.nextElementSibling.innerText=this.value"><span>90</span></div>
+  <div>Motor 4: <input type="range" name="motor4" min="0" max="180" value="90" oninput="this.nextElementSibling.innerText=this.value"><span>90</span></div>
+  <div>Motor 5: <input type="range" name="motor5" min="0" max="180" value="90" oninput="this.nextElementSibling.innerText=this.value"><span>90</span></div>
+  <div>Motor 6: <input type="range" name="motor6" min="0" max="180" value="90" oninput="this.nextElementSibling.innerText=this.value"><span>90</span></div>
+
+  <button type="button" onclick="resetForm()">Reset</button>
+  <button type="button" onclick="savePose()">Save Pose</button>
+  <button type="button" onclick="runPose()">Run</button>
+</form>
+
+<br>
+<table>
+  <thead>
+    <tr>
+      <th>#</th><th>Motor 1</th><th>Motor 2</th><th>Motor 3</th>
+      <th>Motor 4</th><th>Motor 5</th><th>Motor 6</th><th>Action</th>
+    </tr>
+  </thead>
+  <tbody id="poseList"></tbody>
+</table>
+
+<script>
+function resetForm() {
+  document.querySelectorAll('input[type=range]').forEach(i => {
+    i.value = 90
+    i.nextElementSibling.textContent = 90
+  })
+}
+
+function savePose() {
+  const form = new FormData(document.getElementById('controlForm'))
+  fetch('save_pose.php', { method: 'POST', body: form })
+    .then(() => listPoses())
+}
+
+function listPoses() {
+  fetch('list_poses.php')
+    .then(res => res.text())
+    .then(html => document.getElementById('poseList').innerHTML = html)
+}
+
+function runPose(id = null) {
+  fetch('get_run_pose.php' + (id ? '?id=' + id : ''))
+}
+
+function removePose(id) {
+  fetch('delete_pose.php?id=' + id)
+    .then(() => listPoses())
+}
+
+function loadPose(id) {
+  fetch('load_pose.php?id=' + id)
+    .then(res => res.json())
+    .then(data => {
+      Object.keys(data).forEach((key, index) => {
+        if (key.startsWith("motor")) {
+          const el = document.querySelector(`[name=${key}]`)
+          el.value = data[key]
+          el.nextElementSibling.textContent = data[key]
+        }
+      })
+    })
+}
+
+listPoses()
+</script>
+
+</body>
+</html>
